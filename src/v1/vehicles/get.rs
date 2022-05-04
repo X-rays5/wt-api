@@ -57,7 +57,7 @@ pub async fn country_specific(req: Request, ctx: RouteContext<()>) -> Result<Res
 
     let mut res: HashMap<String, Value> = Default::default();
     for category in categories {
-        let category_json = match db.get(format!("{}_{}", country.to_lowercase(), category.to_lowercase()).as_str()).text().await {
+        let mut category_json = match db.get(format!("{}_{}", country.to_lowercase(), category.to_lowercase()).as_str()).text().await {
             Ok(val) => {
                 match val {
                     Some(val) => {Value::from(val.as_str())}
@@ -66,6 +66,26 @@ pub async fn country_specific(req: Request, ctx: RouteContext<()>) -> Result<Res
             }
             Err(err) => return error_response(500, err.to_string().as_str())
         };
+        let updated_at: u64 = match category_json.get("updated_at") {
+            Some(val) => {
+                match val.as_str() {
+                    Some(val) => {val.parse().unwrap()}
+                    None => return error_response(500, "Failed to get updated_at as str")
+                }
+            }
+            None => return error_response(500, "Failed to get updated_at")
+        };
+        let current_ts: u64 = match get_unix_ts().await {
+            Ok(val) => val.parse().unwrap(),
+            Err(_) => return error_response(500, "Failed to get unix timestamp")
+        };
+        if current_ts - updated_at >= 86400000 {
+            category_json = update_vehicles(country, "ground").await;
+            match category_json.get("error") {
+                None => {db.put(format!("{}_{}", country.to_lowercase(), category).as_str(), category_json.to_string()).unwrap().execute().await.unwrap();}
+                Some(_) => {}
+            }
+        }
         res.insert(category.to_lowercase(), category_json);
     }
 
@@ -80,51 +100,55 @@ async fn country_all(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
         Err(err) => return error_response(500, err.to_string().as_str())
     };
 
-    let ground_json = match db.get(format!("{}_ground", country.to_lowercase()).as_str()).text().await {
-        Ok(val) => {
-            match val {
-                Some(val) => {Value::from(val.as_str().clone())}
-                None => update_vehicles(country, "ground").await
+    let categories= vec!["ground", "helicopters", "planes", "naval"];
+    let mut res: HashMap<String, Value> = Default::default();
+    for category in categories {
+        let mut category_json = match db.get(format!("{}_{}", country.to_lowercase(), category).as_str()).text().await {
+            Ok(val) => {
+                match val {
+                    Some(val) => Value::from(val.as_str()),
+                    None => update_vehicles(country, category).await
+                }
             }
-        },
-        Err(err) => return error_response(500, err.to_string().as_str())
-    };
-    let helicopters_json = match db.get(format!("{}_helicopters", country.to_lowercase()).as_str()).text().await {
-        Ok(val) => {
-            match val {
-                Some(val) => {Value::from(val.as_str().clone())}
-                None => update_vehicles(country, "helicopters").await
+            Err(err) => return error_response(500, err.to_string().as_str())
+        };
+        let updated_at: u64;
+        if category != "naval" {
+             updated_at = match category_json.get("updated_at") {
+                Some(val) => {
+                    match val.as_str() {
+                        Some(val) => {val.parse().unwrap()}
+                        None => return error_response(500, "Failed to get updated_at as str")
+                    }
+                }
+                None => return error_response(500, "Failed to get updated_at")
+            };
+        } else {
+            updated_at = match category_json.get("coastal").unwrap().get("updated_at") {
+                Some(val) => {
+                    match val.as_str() {
+                        Some(val) => {val.parse().unwrap()}
+                        None => return error_response(500, "Failed to get updated_at as str")
+                    }
+                }
+                None => return error_response(500, "Failed to get updated_at")
+            };
+        }
+        let current_ts: u64 = match get_unix_ts().await {
+            Ok(val) => val.parse().unwrap(),
+            Err(_) => return error_response(500, "Failed to get unix timestamp")
+        };
+        if current_ts - updated_at >= 86400000 {
+            category_json = update_vehicles(country, "ground").await;
+            match category_json.get("error") {
+                None => {db.put(format!("{}_{}", country.to_lowercase(), category).as_str(), category_json.to_string()).unwrap().execute().await.unwrap();}
+                Some(_) => {}
             }
-        },
-        Err(err) => return error_response(500, err.to_string().as_str())
-    };
-    let planes_json = match db.get(format!("{}_planes", country.to_lowercase()).as_str()).text().await {
-        Ok(val) => {
-            match val {
-                Some(val) => {Value::from(val.as_str().clone())}
-                None => update_vehicles(country, "planes").await
-            }
-        },
-        Err(err) => return error_response(500, err.to_string().as_str())
-    };
-    let naval_json = match db.get(format!("{}_naval", country.to_lowercase()).as_str()).text().await {
-        Ok(val) => {
-            match val {
-                Some(val) => {Value::from(val.as_str().clone())}
-                None => update_vehicles(country, "naval").await
-            }
-        },
-        Err(err) => return error_response(500, err.to_string().as_str())
-    };
+        }
+        res.insert(category.parse().unwrap(), category_json);
+    }
 
-    let res = json!({
-        "ground": ground_json,
-        "helicopters": helicopters_json,
-        "planes": planes_json,
-        "naval": naval_json
-    });
-
-    Response::ok(res.to_string())
+    Response::ok(json!(res).to_string())
 }
 
 pub async fn global_category(_req: Request, _ctx: RouteContext<()>) -> Result<Response> {
