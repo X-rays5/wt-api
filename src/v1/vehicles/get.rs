@@ -4,6 +4,7 @@ use serde_json::{json, Value};
 
 use crate::v1::vehicles::valid_args::*;
 use crate::v1::vehicles::update::*;
+use crate::utils;
 
 fn error_response(code: u16, message: &str) -> Result<Response> {
     let res = json!({
@@ -50,39 +51,34 @@ pub async fn country_specific(req: Request, ctx: RouteContext<()>) -> Result<Res
         }
     }
 
-    let db = match ctx.kv("db") {
-        Ok(val) => {val},
+    let db = match utils::db_get(&ctx) {
+        Ok(val) => val,
         Err(err) => return error_response(500, err.to_string().as_str())
     };
 
     let mut res: HashMap<String, Value> = Default::default();
     for category in categories {
-        let mut category_json = match db.get(format!("{}_{}", country.to_lowercase(), category.to_lowercase()).as_str()).text().await {
-            Ok(val) => {
-                match val {
-                    Some(val) => {Value::from(val.as_str())}
-                    None => update_vehicles(country.to_lowercase().as_str(), category.to_lowercase().as_str()).await
-                }
-            }
-            Err(err) => return error_response(500, err.to_string().as_str())
+        let mut updated: bool = false;
+        let mut category_json = match utils::db_get_key(&db, format!("{}_{}", country.to_lowercase(), category.to_lowercase())).await {
+            Some(val) => {Value::from(val.as_str())}
+            None => {updated = true; update_vehicles(country.to_lowercase().as_str(), category.to_lowercase().as_str()).await}
         };
         let updated_at: u64 = match category_json.get("updated_at") {
             Some(val) => {
-                match val.as_str() {
-                    Some(val) => {val.parse().unwrap()}
-                    None => return error_response(500, "Failed to get updated_at as str")
+                match val.as_u64() {
+                    Some(val) => val,
+                    None => return error_response(500, "Failed to get updated_at as u64")
                 }
             }
             None => return error_response(500, "Failed to get updated_at")
         };
-        let current_ts: u64 = match get_unix_ts().await {
-            Ok(val) => val.parse().unwrap(),
-            Err(_) => return error_response(500, "Failed to get unix timestamp")
-        };
-        if current_ts - updated_at >= 86400000 {
-            category_json = update_vehicles(country, "ground").await;
+        let current_ts = get_unix_ts();
+        if updated || current_ts - updated_at >= 86400000 {
+            if !updated {
+                category_json = update_vehicles(country, "ground").await;
+            }
             match category_json.get("error") {
-                None => {db.put(format!("{}_{}", country.to_lowercase(), category).as_str(), category_json.to_string()).unwrap().execute().await.unwrap();}
+                None => {utils::db_write_key(&db, format!("{}_{}", country.to_lowercase(), category), category_json.to_string().as_str()).await;}
                 Some(_) => {}
             }
         }
@@ -95,22 +91,17 @@ pub async fn country_specific(req: Request, ctx: RouteContext<()>) -> Result<Res
 async fn country_all(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let country = ctx.param("country").unwrap();
 
-    let db = match ctx.kv("db") {
-        Ok(val) => {val},
+    let db = match utils::db_get(&ctx) {
+        Ok(val) => val,
         Err(err) => return error_response(500, err.to_string().as_str())
     };
 
     let categories= vec!["ground", "helicopters", "planes", "naval"];
     let mut res: HashMap<String, Value> = Default::default();
     for category in categories {
-        let mut category_json = match db.get(format!("{}_{}", country.to_lowercase(), category).as_str()).text().await {
-            Ok(val) => {
-                match val {
-                    Some(val) => Value::from(val.as_str()),
-                    None => update_vehicles(country, category).await
-                }
-            }
-            Err(err) => return error_response(500, err.to_string().as_str())
+        let mut category_json = match utils::db_get_key(&db, format!("{}_{}", country.to_lowercase(), category)).await {
+            Some(val) => Value::from(val.as_str()),
+            None => update_vehicles(country, category).await
         };
         let updated_at: u64;
         if category != "naval" {
@@ -134,14 +125,12 @@ async fn country_all(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
                 None => return error_response(500, "Failed to get updated_at")
             };
         }
-        let current_ts: u64 = match get_unix_ts().await {
-            Ok(val) => val.parse().unwrap(),
-            Err(_) => return error_response(500, "Failed to get unix timestamp")
-        };
+        let current_ts = get_unix_ts();
+        console_log!("{}", format!("{}_{}", country.to_lowercase(), category).as_str());
         if current_ts - updated_at >= 86400000 {
             category_json = update_vehicles(country, "ground").await;
             match category_json.get("error") {
-                None => {db.put(format!("{}_{}", country.to_lowercase(), category).as_str(), category_json.to_string()).unwrap().execute().await.unwrap();}
+                None => {utils::db_write_key(&db, format!("{}_{}", country.to_lowercase(), category), category_json.to_string().as_str()).await;}
                 Some(_) => {}
             }
         }

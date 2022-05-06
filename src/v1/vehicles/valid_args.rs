@@ -1,15 +1,12 @@
 pub use std::collections::HashSet;
 pub use std::str::FromStr;
 use lazy_static::lazy_static;
-use worker::console_log;
 
 pub fn string_name_format(s: &str) -> String {
     let mut str_copy = s.as_bytes().to_vec();
     str_copy = str_copy.to_ascii_lowercase();
     str_copy[0] = str_copy[0].to_ascii_uppercase();
     let str_copy = String::from_utf8(str_copy).unwrap();
-
-    console_log!("{}", str_copy);
 
     str_copy
 }

@@ -14,8 +14,8 @@ const GROUND_URL: &str = "_ground_vehicles";
 const COASTAL_FLEET_URL: &str = "Coastal_Fleet_";
 const BLUEWATER_FLEET_URL: &str = "Bluewater_Fleet_";
 
-pub async fn get_unix_ts() -> Result<String> {
-    Fetch::Url("https://unix-timestamp.bleep.workers.dev/".parse().unwrap()).send().await.unwrap().text().await
+pub fn get_unix_ts() -> u64 {
+    Date::now().as_millis()
 }
 
 pub async fn update_vehicles(country: &str, category: &str) -> Value {
@@ -63,8 +63,6 @@ pub async fn update_vehicles(country: &str, category: &str) -> Value {
             parse_tree(Fetch::Url(format!("{}{}{}", BASE_URL, country, category).parse().unwrap()).send().await).await
         }
     };
-
-    console_log!("{}", res);
 
     res
 }
@@ -119,10 +117,7 @@ async fn parse_tree(html_req: Result<Response>) -> Value {
         vehicles.push(vehicle);
     }
 
-    let unix_time = match get_unix_ts().await {
-        Ok(val) => val,
-        Err(_) => {return json!({"error": "Failed to get unix timestamp"})}
-    };
+    let unix_time = get_unix_ts();
 
     return json!({
         "updated_at": unix_time,
