@@ -7,9 +7,6 @@ binding = "db"
 id = "d7fb78b3d57d4acfa35c0087892455a9"
 preview_id = "0a8c99eefcd54aeca4b39221a10d343f"
 
-[triggers]
-crons = ["0 0 12 1/1 * ? *"]
-
 [vars]
 WORKERS_RS_VERSION = "0.0.9"
 
