@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use worker::*;
-use serde_json::{json, Value};
+use serde_json::{from_str, json, Value};
+use worker::kv::KvStore;
 
 use crate::v1::vehicles::valid_args::*;
 use crate::v1::vehicles::update::*;
@@ -17,6 +18,39 @@ fn error_response(code: u16, message: &str) -> Result<Response> {
     Response::error(res.to_string(), code)
 }
 
+async fn get_category(db: &KvStore, country: &str, category: &str) -> Result<Value> {
+    if !country_has_category(ECountries::from_str(country).unwrap(), EVehiclesCategories::from_str(category).unwrap()) {
+        return Err(Error::from(format!("{} does noet have the vehicle category: {}", country, category)));
+    }
+
+    let mut updated: bool = false;
+    let mut category_json: Value = match utils::db_get_key(&db, format!("{}_{}", country.to_lowercase(), category.to_lowercase())).await {
+        Some(val) => from_str(&*val).unwrap(),
+        None => {
+            updated = true;
+            update_vehicles(country.to_lowercase().as_str(), category.to_lowercase().as_str()).await
+        }
+    };
+
+    let updated_at = match category_json["updated_at"].as_u64() {
+        Some(val) => val,
+        None => return Err(Error::from("Failed to get updated_at as u64"))
+    };
+
+    let current_ts = utils::get_unix_ts();
+    if updated || current_ts - updated_at >= 86400000 {
+        if !updated {
+            category_json = update_vehicles(country, category).await;
+        }
+        match category_json.get("error") {
+            None => {utils::db_write_key(&db, format!("{}_{}", country.to_lowercase(), category), category_json.to_string().as_str()).await;}
+            Some(_) => {}
+        }
+    }
+
+    Ok(category_json)
+}
+
 pub async fn country_specific(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let country = match ctx.param("country") {
         Some(val) => {val}
@@ -25,10 +59,10 @@ pub async fn country_specific(req: Request, ctx: RouteContext<()>) -> Result<Res
     if country.to_lowercase() == "all" {
         return global_category(req, ctx).await
     }
-    match ECountries::from_str(country) {
-        Ok(_) => {}
-        Err(_) => {return error_response(400, format!("{} is a unknown country", country).as_str())}
-    };
+
+    if !is_country(country) {
+        return error_response(404, format!("{} is a unknown country", country).as_str());
+    }
 
     let category = match ctx.param("category") {
         Some(val) => {val}
@@ -40,14 +74,22 @@ pub async fn country_specific(req: Request, ctx: RouteContext<()>) -> Result<Res
         if category.to_lowercase() == "all" {
             return country_all(req, ctx).await
         } else {
-            categories.push(category);
+            if !is_category(category) {
+                return error_response(404, format!("{} is a unknown category", category).as_str())
+            } else {
+                if country_has_category(ECountries::from_str(country).unwrap(), EVehiclesCategories::from_str(category).unwrap()) {
+                    categories.push(category);
+                } else {
+                    return error_response(404, format!("{} does not have the vehicle category: {}", country, category).as_str());
+                }
+            }
         }
     };
-
     if categories.is_empty() {
-        match EVehiclesCategories::from_str(category) {
-            Ok(_) => {categories.push(category)}
-            Err(_) => {return error_response(404, format!("{} is a unknown category", category).as_str())}
+        if is_category(category) {
+            categories.push(category);
+        } else {
+            return error_response(404, format!("{} is a unknown category", category).as_str());
         }
     }
 
@@ -58,31 +100,11 @@ pub async fn country_specific(req: Request, ctx: RouteContext<()>) -> Result<Res
 
     let mut res: HashMap<String, Value> = Default::default();
     for category in categories {
-        let mut updated: bool = false;
-        let mut category_json = match utils::db_get_key(&db, format!("{}_{}", country.to_lowercase(), category.to_lowercase())).await {
-            Some(val) => {Value::from(val.as_str())}
-            None => {updated = true; update_vehicles(country.to_lowercase().as_str(), category.to_lowercase().as_str()).await}
+        let vehicles = match get_category(&db, country, category).await {
+            Ok(val) => val,
+            Err(err) => return error_response(500, err.to_string().as_str())
         };
-        let updated_at: u64 = match category_json.get("updated_at") {
-            Some(val) => {
-                match val.as_u64() {
-                    Some(val) => val,
-                    None => return error_response(500, "Failed to get updated_at as u64")
-                }
-            }
-            None => return error_response(500, "Failed to get updated_at")
-        };
-        let current_ts = get_unix_ts();
-        if updated || current_ts - updated_at >= 86400000 {
-            if !updated {
-                category_json = update_vehicles(country, "ground").await;
-            }
-            match category_json.get("error") {
-                None => {utils::db_write_key(&db, format!("{}_{}", country.to_lowercase(), category), category_json.to_string().as_str()).await;}
-                Some(_) => {}
-            }
-        }
-        res.insert(category.to_lowercase(), category_json);
+        res.insert(category.to_lowercase(), vehicles);
     }
 
     Response::ok(json!(res).to_string())
@@ -99,42 +121,14 @@ async fn country_all(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let categories= vec!["ground", "helicopters", "planes", "naval"];
     let mut res: HashMap<String, Value> = Default::default();
     for category in categories {
-        let mut category_json = match utils::db_get_key(&db, format!("{}_{}", country.to_lowercase(), category)).await {
-            Some(val) => Value::from(val.as_str()),
-            None => update_vehicles(country, category).await
-        };
-        let updated_at: u64;
-        if category != "naval" {
-             updated_at = match category_json.get("updated_at") {
-                Some(val) => {
-                    match val.as_str() {
-                        Some(val) => {val.parse().unwrap()}
-                        None => return error_response(500, "Failed to get updated_at as str")
-                    }
-                }
-                None => return error_response(500, "Failed to get updated_at")
+        if country_has_category(ECountries::from_str(country).unwrap(), EVehiclesCategories::from_str(category).unwrap()) {
+            let vehicles = match get_category(&db, country, category).await {
+                Ok(val) => val,
+                Err(err) => return error_response(500, err.to_string().as_str())
             };
-        } else {
-            updated_at = match category_json.get("coastal").unwrap().get("updated_at") {
-                Some(val) => {
-                    match val.as_str() {
-                        Some(val) => {val.parse().unwrap()}
-                        None => return error_response(500, "Failed to get updated_at as str")
-                    }
-                }
-                None => return error_response(500, "Failed to get updated_at")
-            };
+
+            res.insert(category.parse().unwrap(), vehicles);
         }
-        let current_ts = get_unix_ts();
-        console_log!("{}", format!("{}_{}", country.to_lowercase(), category).as_str());
-        if current_ts - updated_at >= 86400000 {
-            category_json = update_vehicles(country, "ground").await;
-            match category_json.get("error") {
-                None => {utils::db_write_key(&db, format!("{}_{}", country.to_lowercase(), category), category_json.to_string().as_str()).await;}
-                Some(_) => {}
-            }
-        }
-        res.insert(category.parse().unwrap(), category_json);
     }
 
     Response::ok(json!(res).to_string())

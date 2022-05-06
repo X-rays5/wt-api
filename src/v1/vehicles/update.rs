@@ -6,6 +6,7 @@ use scraper::html::*;
 use scraper::Selector;
 
 use crate::v1::vehicles::valid_args::*;
+use crate::utils;
 
 const BASE_URL: &str = "https://wiki.warthunder.com/Category:";
 const PLANE_URL: &str = "_aircraft";
@@ -13,10 +14,6 @@ const HELICOPTER_URL: &str = "_helicopters";
 const GROUND_URL: &str = "_ground_vehicles";
 const COASTAL_FLEET_URL: &str = "Coastal_Fleet_";
 const BLUEWATER_FLEET_URL: &str = "Bluewater_Fleet_";
-
-pub fn get_unix_ts() -> u64 {
-    Date::now().as_millis()
-}
 
 pub async fn update_vehicles(country: &str, category: &str) -> Value {
     let category = match EVehiclesCategories::from_str(category) {
@@ -42,7 +39,9 @@ pub async fn update_vehicles(country: &str, category: &str) -> Value {
                 return bluewater;
             }
 
+            let unix_time = utils::get_unix_ts();
             return json!({
+                "updated_at": unix_time,
                 "coastal": coastal,
                 "bluewater": bluewater
             });
@@ -68,8 +67,6 @@ pub async fn update_vehicles(country: &str, category: &str) -> Value {
 }
 
 async fn naval_vehicles(country: &str, naval_type: &str) -> Value {
-    console_log!("{}", format!("{}{}{}", BASE_URL, COASTAL_FLEET_URL, country));
-
     match naval_type {
         "coastal" => {
             parse_tree(Fetch::Url(format!("{}{}{}", BASE_URL, COASTAL_FLEET_URL, country).parse().unwrap()).send().await).await
@@ -117,7 +114,7 @@ async fn parse_tree(html_req: Result<Response>) -> Value {
         vehicles.push(vehicle);
     }
 
-    let unix_time = get_unix_ts();
+    let unix_time = utils::get_unix_ts();
 
     return json!({
         "updated_at": unix_time,

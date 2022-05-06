@@ -13,7 +13,11 @@ cfg_if! {
     }
 }
 
-const DEBUG_KV: bool = true;
+pub fn get_unix_ts() -> u64 {
+    Date::now().as_millis()
+}
+
+const DEBUG_KV: bool = false;
 
 #[allow(dead_code)]
 pub fn db_get(ctx: &RouteContext<()>) -> Result<KvStore> {

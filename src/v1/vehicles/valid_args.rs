@@ -48,6 +48,14 @@ impl FromStr for ECountries {
     }
 }
 
+pub fn is_country(country: &str) -> bool {
+    let country_tmp = string_name_format(country);
+    match ECountries::from_str(&*country_tmp) {
+        Ok(_) => true,
+        Err(_) => false
+    }
+}
+
 #[derive(Eq, Hash, PartialEq)]
 pub enum EVehiclesCategories {
     Ground,
@@ -70,6 +78,14 @@ impl FromStr for EVehiclesCategories {
             "Naval" => Ok(EVehiclesCategories::Naval),
             _ => {Err(())}
         }
+    }
+}
+
+pub fn is_category(category: &str) -> bool {
+    let category_tmp = string_name_format(category);
+    match EVehiclesCategories::from_str(&*category_tmp) {
+        Ok(_) => true,
+        Err(_) => false
     }
 }
 
@@ -160,4 +176,19 @@ lazy_static! {
 
         set
     };
+}
+
+pub fn country_has_category(country: ECountries, category: EVehiclesCategories) -> bool {
+    match country {
+        ECountries::Usa => {USA_VEHICLES.contains(&category)}
+        ECountries::Germany => {GERMANY_VEHICLES.contains(&category)}
+        ECountries::Ussr => {USSR_VEHICLES.contains(&category)}
+        ECountries::Britain => {BRITAIN_VEHICLES.contains(&category)}
+        ECountries::Japan => {JAPAN_VEHICLES.contains(&category)}
+        ECountries::China => {CHINA_VEHICLES.contains(&category)}
+        ECountries::Italy => {ITALY_VEHICLES.contains(&category)}
+        ECountries::France => {FRANCE_VEHICLES.contains(&category)}
+        ECountries::Sweden => {SWEDEN_VEHICLES.contains(&category)}
+        ECountries::Israel => {ISREAL_VEHICLES.contains(&category)}
+    }
 }
