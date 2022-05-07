@@ -5,8 +5,7 @@ use worker::Result;
 use scraper::html::*;
 use scraper::Selector;
 
-use crate::v1::vehicles::valid_args::*;
-use crate::utils;
+use crate::utils::*;
 
 const BASE_URL: &str = "https://wiki.warthunder.com/Category:";
 const PLANE_URL: &str = "_aircraft";
@@ -15,9 +14,11 @@ const GROUND_URL: &str = "_ground_vehicles";
 const COASTAL_FLEET_URL: &str = "Coastal_Fleet_";
 const BLUEWATER_FLEET_URL: &str = "Bluewater_Fleet_";
 
-pub async fn update_vehicles(country: &str, category: &str) -> Value {
-    let category = match EVehiclesCategories::from_str(category) {
-        Ok(val) => { val }
+pub async fn update_vehicles(ctx: &RouteContext<()>, country: &str, category: &str) -> Value {
+    let category = category.to_lowercase();
+    let category = category.as_str();
+    match is_category(ctx, category).await {
+        Ok(_) => {}
         Err(_) => { return json!({"error": format!("Invalid category {}", category)}) }
     };
 
@@ -28,7 +29,7 @@ pub async fn update_vehicles(country: &str, category: &str) -> Value {
     let country = country.as_str();
 
     let res = match category {
-        EVehiclesCategories::Naval => {
+        "naval" => {
             let coastal = naval_vehicles(country, "coastal").await;
             if coastal.as_object().unwrap().contains_key("error") {
                 return coastal;
@@ -39,7 +40,7 @@ pub async fn update_vehicles(country: &str, category: &str) -> Value {
                 return bluewater;
             }
 
-            let unix_time = utils::get_unix_ts();
+            let unix_time = get_unix_ts();
             return json!({
                 "updated_at": unix_time,
                 "coastal": coastal,
@@ -48,9 +49,9 @@ pub async fn update_vehicles(country: &str, category: &str) -> Value {
         },
         _ => {
             let category = match category {
-                EVehiclesCategories::Ground => { GROUND_URL }
-                EVehiclesCategories::Planes => { PLANE_URL }
-                EVehiclesCategories::Helicopters => { HELICOPTER_URL }
+                "ground" => { GROUND_URL }
+                "aircraft" => { PLANE_URL }
+                "helicopters" => { HELICOPTER_URL }
                 _ => { "" }
             };
             if category.is_empty() {
@@ -114,7 +115,7 @@ async fn parse_tree(html_req: Result<Response>) -> Value {
         vehicles.push(vehicle);
     }
 
-    let unix_time = utils::get_unix_ts();
+    let unix_time = get_unix_ts();
 
     return json!({
         "updated_at": unix_time,

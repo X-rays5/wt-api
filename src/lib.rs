@@ -22,8 +22,12 @@ pub async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     let router = Router::new();
 
     router
-        .get("/", |_, _| {Response::empty()})
         .get_async("/v1/vehicles/:country/:category", v1::vehicles::get::country_specific)
+        .get_async("/v1/countries/", v1::countries::get::countries)
+        .get_async("/v1/countries/have/:category", v1::countries::get::have_category)
+        .get_async("/v1/categories", v1::categories::get::get_categories)
+        .get_async("/v1/categories/has/:category/:country", v1::categories::get::country_has_categories)
+        .get_async("/v1/categories/countries", v1::categories::get::which_categories_per_country)
         .run(req, env)
         .await
 }

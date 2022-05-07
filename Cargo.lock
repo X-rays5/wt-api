@@ -1280,7 +1280,6 @@ version = "1.0.0"
 dependencies = [
  "cfg-if 1.0.0",
  "console_error_panic_hook",
- "lazy_static",
  "scraper",
  "serde",
  "serde_json",
