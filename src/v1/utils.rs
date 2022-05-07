@@ -6,7 +6,15 @@ use crate::utils::*;
 
 pub async fn parse_categories(ctx: &RouteContext<()>, country: &str, category: &str, check_exists: bool) -> Result<Vec<String>> {
     let mut categories: Vec<String> = Vec::new();
+    let category = category.to_lowercase();
     for category in category.split(",").into_iter() {
+        if category == "all" {
+            for vehicle_category in get_vehicle_categories() {
+                categories.push(vehicle_category.to_string());
+            }
+            return Ok(categories);
+        }
+
         if !is_category(category) {
             return Err(Error::from(format!("{} is a unknown category", category)));
         } else {
@@ -19,7 +27,7 @@ pub async fn parse_categories(ctx: &RouteContext<()>, country: &str, category: &
     }
 
     if categories.is_empty() {
-        if is_category(category) {
+        if is_category(category.as_str()) {
             categories.push(category.into());
         } else {
             return Err(Error::from(format!("{} is a unknown category", category)));

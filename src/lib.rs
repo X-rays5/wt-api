@@ -22,6 +22,7 @@ pub async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     let router = Router::new();
 
     router
+        .get("/", |_,_| {Response::redirect_with_status(Url::parse("https://github.com/X-rays5/wt-api").unwrap(), 301)})
         .get_async("/v1/vehicles/:country/:category", v1::vehicles::get::country_specific)
         .get_async("/v1/countries/", v1::countries::get::countries)
         .get_async("/v1/countries/have/:category", v1::countries::get::have_category)

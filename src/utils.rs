@@ -158,6 +158,10 @@ pub async fn fetch_categories_for_countries(ctx: &RouteContext<()>, db: &KvStore
                 Ok(val) => val.to_lowercase(),
                 Err(err) => return Err(err)
             };
+            let body = Html::parse_document(body.as_str());
+            let selector = Selector::parse("table.wt-class-table").unwrap();
+            let mut body = body.select(&selector);
+            let body = body.next().unwrap().inner_html();
 
             for country in &countries {
                 let country_tmp = country.to_lowercase();

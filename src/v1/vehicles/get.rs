@@ -9,7 +9,7 @@ use crate::v1::utils::*;
 
 async fn get_category(ctx: &RouteContext<()>, db: &KvStore, country: &str, category: &str) -> Result<Value> {
     if !country_has_category(ctx, country, category).await.unwrap() {
-        return Err(Error::from(format!("{} does noet have the vehicle category: {}", country, category)));
+        return Err(Error::from(format!("{} does not have the vehicle category: {}", country, category)));
     }
 
     let mut updated: bool = false;
@@ -59,54 +59,23 @@ pub async fn country_specific(req: Request, ctx: RouteContext<()>) -> Result<Res
     };
     let category = category.to_lowercase();
 
-    if category.contains("all") {
-        return match country_all(req, ctx).await {
-            Ok(val) => Ok(val),
-            Err(err) => return error_response(500, err.to_string().as_str())
-        }
-    } else {
-        let categories = match parse_categories(&ctx, country, category.as_str(), true).await {
-            Ok(val) => val,
-            Err(err) => return error_response(404, err.to_string().as_str())
-        };
-
-        let db = match db_get(&ctx) {
-            Ok(val) => val,
-            Err(err) => return error_response(500, err.to_string().as_str())
-        };
-
-        let mut res: HashMap<String, Value> = Default::default();
-        for category in categories {
-            let vehicles = match get_category(&ctx, &db, country, category.as_str()).await {
-                Ok(val) => val,
-                Err(err) => return error_response(500, err.to_string().as_str())
-            };
-            res.insert(category.to_lowercase(), vehicles);
-        }
-
-        Response::ok(json!(res).to_string())
-    }
-}
-
-async fn country_all(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
-    let country = ctx.param("country").unwrap();
+    let categories = match parse_categories(&ctx, country, category.as_str(), true).await {
+        Ok(val) => val,
+        Err(err) => return error_response(404, err.to_string().as_str())
+    };
 
     let db = match db_get(&ctx) {
         Ok(val) => val,
         Err(err) => return error_response(500, err.to_string().as_str())
     };
 
-    let categories= get_vehicle_categories();
     let mut res: HashMap<String, Value> = Default::default();
     for category in categories {
-        if country_has_category(&ctx, country, category).await.unwrap() {
-            let vehicles = match get_category(&ctx, &db, country, category).await {
-                Ok(val) => val,
-                Err(err) => return error_response(500, err.to_string().as_str())
-            };
-
-            res.insert(category.parse().unwrap(), vehicles);
-        }
+        let vehicles = match get_category(&ctx, &db, country, category.as_str()).await {
+            Ok(val) => val,
+            Err(err) => return error_response(500, err.to_string().as_str())
+        };
+        res.insert(category.to_lowercase(), vehicles);
     }
 
     Response::ok(json!(res).to_string())
