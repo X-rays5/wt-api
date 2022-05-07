@@ -14,13 +14,12 @@ const GROUND_URL: &str = "_ground_vehicles";
 const COASTAL_FLEET_URL: &str = "Coastal_Fleet_";
 const BLUEWATER_FLEET_URL: &str = "Bluewater_Fleet_";
 
-pub async fn update_vehicles(ctx: &RouteContext<()>, country: &str, category: &str) -> Value {
+pub async fn update_vehicles(country: &str, category: &str) -> Value {
     let category = category.to_lowercase();
     let category = category.as_str();
-    match is_category(ctx, category).await {
-        Ok(_) => {}
-        Err(_) => { return json!({"error": format!("Invalid category {}", category)}) }
-    };
+    if !is_category(category) {
+        return json!({"error": format!("Invalid category {}", category)})
+    }
 
     let mut country = string_name_format(country);
     if country == "Ussr" || country == "Usa" {

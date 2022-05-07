@@ -40,14 +40,9 @@ pub async fn have_category(_req: Request, ctx: RouteContext<()>) -> Result<Respo
         Some(val) => val,
         None => return error_response(400, "Missing category parameter")
     };
-    match is_category(&ctx, category).await {
-        Ok(val) => {
-            if !val {
-                return error_response(400, format!("{} is a unknown category", category).as_str())
-            }
-        }
-        Err(err) => return error_response(500, err.to_string().as_str())
-    };
+    if !is_category(category) {
+        return error_response(400, format!("{} is a unknown category", category).as_str())
+    }
 
     let countries = match get_countries(&ctx).await {
         Ok(val) => val,

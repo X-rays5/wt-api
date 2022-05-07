@@ -121,101 +121,20 @@ pub async fn is_country(ctx: &RouteContext<()>, country: &str) -> Result<bool> {
     }
 }
 
-pub async fn fetch_categories(db: &KvStore) -> Result<Vec<String>> {
-    let mut res = match Fetch::Url("https://wiki.warthunder.com/Main_Page".parse().unwrap()).send().await {
-        Ok(val) => val,
-        Err(err) => return Err(err)
-    };
-
-    if res.status_code() != 200 {
-        return Err(Error::from("Received non 200 status code when getting countries"))
-    }
-
-    let body = match res.text().await {
-        Ok(val) => val,
-        Err(err) => return Err(err)
-    };
-
-
-    let mut categories: Vec<String> = Default::default();
-    let body = Html::parse_document(body.as_str());
-    let selector = Selector::parse("#p-Vehicles").unwrap();
-    for div in body.select(&selector) {
-        let selector = Selector::parse(r#"a"#).unwrap();
-        for category in div.select(&selector) {
-            let category = category.inner_html();
-            let category = category.split(" ").next().unwrap();
-            let category = category.to_lowercase();
-
-            let category = match category.as_str() {
-                "aviation" => "aircraft",
-                "helicopters" => "helicopters",
-                "ground_vehicles" => "ground",
-                "fleet" => "naval",
-                val => val
-            };
-
-            categories.push(category.to_string());
-        }
-    };
-
-    let unix_time = get_unix_ts();
-    let categories_json = json!({
-        "updated_at": unix_time,
-        "categories": categories
-    });
-    db_write_key(&db, "categories".into(), categories_json.to_string().as_str()).await;
-
-    Ok(categories)
-}
-
-pub async fn get_categories(ctx: &RouteContext<()>) -> Result<Vec<String>> {
-    let db = match db_get(&ctx) {
-        Ok(val) => val,
-        Err(err) => return Err(err)
-    };
-
-    Ok(match db_get_key(&db, "categories".into()).await {
-        Some(val) => {
-            let json: Value = serde_json::from_str(&*val).unwrap();
-            if should_update(json["updated_at"].as_u64().unwrap(), 86400000) {
-                match fetch_categories(&db).await {
-                    Ok(val) => val,
-                    Err(err) => return Err(err)
-                }
-            } else {
-                let categories = json["categories"].as_array().unwrap();
-                let mut categories_tmp: Vec<String> = Default::default();
-                for category in categories {
-                    categories_tmp.push(category.as_str().unwrap().to_string())
-                }
-
-                categories_tmp
-            }
-        }
-        None => {
-            match fetch_categories(&db).await {
-                Ok(val) => val,
-                Err(err) => return Err(err)
-            }
-        }
-    })
+pub fn get_vehicle_categories() -> Vec<&'static str> {
+    vec!["aircraft", "helicopters", "ground", "naval"]
 }
 
 //noinspection DuplicatedCode
-pub async fn is_category(ctx: &RouteContext<()>, category: &str) -> Result<bool> {
-    match get_categories(ctx).await {
-        Ok(val) => {
-            let category_tmp = category.to_lowercase();
-            for category in val {
-                if category.to_lowercase() == category_tmp {
-                    return Ok(true);
-                }
-            }
-            Ok(false)
+pub fn is_category(category: &str) -> bool {
+    let categories = get_vehicle_categories();
+    let category_tmp = category.to_lowercase();
+    for category in categories {
+        if category.to_lowercase() == category_tmp {
+            return true;
         }
-        Err(err) => return Err(err)
     }
+    false
 }
 
 pub async fn fetch_categories_for_countries(ctx: &RouteContext<()>, db: &KvStore) -> Result<HashMap<String, HashMap<String, bool>>> {

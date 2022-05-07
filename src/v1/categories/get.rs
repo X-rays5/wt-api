@@ -6,33 +6,8 @@ use serde_json::*;
 use crate::utils::*;
 use crate::v1::utils::*;
 
-pub async fn get_categories(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
-    let db = match db_get(&ctx) {
-        Ok(val) => val,
-        Err(err) => return error_response(500, err.to_string().as_str())
-    };
-
-    let result: Value = match db_get_key(&db, "categories".into()).await {
-        Some(val) => from_str(val.as_str()).unwrap(),
-        None => {
-            match fetch_categories(&db).await {
-                Ok(_) => {},
-                Err(err) => return error_response(500, err.to_string().as_str())
-            };
-
-            return Response::ok(db_get_key(&db, "categories".into()).await.unwrap())
-        }
-    };
-    if should_update(result["updated_at"].as_u64().unwrap(), 86400000) {
-        match fetch_categories(&db).await {
-            Ok(_) => {},
-            Err(err) => return error_response(500, err.to_string().as_str())
-        };
-
-        return Response::ok(db_get_key(&db, "categories".into()).await.unwrap())
-    } else {
-        return Response::ok(result.to_string())
-    }
+pub async fn get_categories(_req: Request, _ctx: RouteContext<()>) -> Result<Response> {
+    Response::ok(json!(get_vehicle_categories()).to_string())
 }
 
 pub async fn country_has_categories(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
