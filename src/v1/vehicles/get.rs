@@ -112,6 +112,46 @@ async fn country_all(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
     Response::ok(json!(res).to_string())
 }
 
-pub async fn global_category(_req: Request, _ctx: RouteContext<()>) -> Result<Response> {
-    todo!()
+pub async fn global_category(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let category = match ctx.param("category") {
+        Some(val) => val,
+        None => return error_response(400, "Missing category parameter")
+    };
+    let categories = match parse_categories(&ctx, "", category, false).await {
+        Ok(val) => val,
+        Err(err) => return error_response(400, err.to_string().as_str())
+    };
+
+    let mut res: HashMap<String, HashMap<String, Value>> = Default::default();
+    let countries = match get_countries(&ctx).await {
+        Ok(val) => val,
+        Err(err) => return error_response(500, err.to_string().as_str())
+    };
+    for country in &countries {
+      for category in &categories {
+          if !res.contains_key(category) {
+              res.insert(category.clone(), Default::default());
+          }
+
+          let has = match country_has_category(&ctx, country, category.as_str()).await {
+              Ok(val) => val,
+              Err(err) => return error_response(500, err.to_string().as_str())
+          };
+          if has {
+              let db = match db_get(&ctx) {
+                  Ok(val) => val,
+                  Err(err) => return error_response(500, err.to_string().as_str())
+              };
+
+              let vehicles = match get_category(&ctx, &db, country, category.as_str()).await {
+                  Ok(val) => val,
+                  Err(err) => return error_response(500, err.to_string().as_str())
+              };
+
+              res.get_mut(category.as_str()).unwrap().insert(country.to_string(), vehicles);
+          }
+      }
+    }
+
+    Response::ok(json!(res).to_string())
 }

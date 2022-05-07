@@ -4,6 +4,50 @@ Basic api for war thunder. Supporting vehicle related stuff.
 
 #### Note: All data is cached for 24 hours as indicated by the updated_at json member in responses
 
+### Get categories of vehicles from country
+```http request
+GET /v1/vehicles/all/:category,:category
+```
+Response
+```json
+{
+  "ground": {
+    "sweden": {
+      "updated_at": 1651950552409,
+      "vehicles": [
+        {
+          "img_url": "https://encyclopedia.warthunder.com/slots/sw_strv_m31.png",
+          "name": "Strv m/31"
+        }
+      ]
+    }
+  },
+  "naval": {
+    "japan": {
+      "bluewater": {
+        "updated_at": 1651950728066,
+        "vehicles": [
+          {
+            "img_url": "https://encyclopedia.warthunder.com/slots/jp_destroyer_mutsuki.png",
+            "name": "IJN Mutsuki"
+          }
+        ]
+      },
+      "coastal": {
+        "updated_at": 1651950727920,
+        "vehicles": [
+          {
+            "img_url": "https://encyclopedia.warthunder.com/slots/jp_t14_class.png",
+            "name": "Type T-14"
+          }
+        ]
+      },
+      "updated_at": 1651950728066
+    }
+  }
+}
+```
+
 ### Get all existing categories
 ```http request
 GET /v1/categories
