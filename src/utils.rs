@@ -72,37 +72,50 @@ pub async fn fetch_countries(db: &KvStore) -> Result<Vec<String>> {
     Ok(countries)
 }
 
+static mut COUNTRIES_CACHE: Vec<String> = Vec::new();
 pub async fn get_countries(ctx: &RouteContext<()>) -> Result<Vec<String>> {
+    unsafe {
+        if !COUNTRIES_CACHE.is_empty() {
+            return Ok(COUNTRIES_CACHE.clone());
+        }
+    }
+
+    console_log!("get_countries cache empty");
+
     let db = match db_get(&ctx) {
         Ok(val) => val,
         Err(err) => return Err(err)
     };
 
-    Ok(match db_get_key(&db, "countries".into()).await {
-        Some(val) => {
-            let json: Value = serde_json::from_str(&*val).unwrap();
-            if should_update(json["updated_at"].as_u64().unwrap(), 86400000) {
+    unsafe {
+        COUNTRIES_CACHE = match db_get_key(&db, "countries".into()).await {
+            Some(val) => {
+                let json: Value = serde_json::from_str(&*val).unwrap();
+                if should_update(json["updated_at"].as_u64().unwrap(), 86400000) {
+                    match fetch_countries(&db).await {
+                        Ok(val) => val,
+                        Err(err) => return Err(err)
+                    }
+                } else {
+                    let countries = json["countries"].as_array().unwrap();
+                    let mut countries_tmp: Vec<String> = Default::default();
+                    for country in countries {
+                        countries_tmp.push(country.as_str().unwrap().to_string())
+                    }
+
+                    countries_tmp
+                }
+            }
+            None => {
                 match fetch_countries(&db).await {
                     Ok(val) => val,
                     Err(err) => return Err(err)
                 }
-            } else {
-                let countries = json["countries"].as_array().unwrap();
-                let mut countries_tmp: Vec<String> = Default::default();
-                for country in countries {
-                    countries_tmp.push(country.as_str().unwrap().to_string())
-                }
+            }
+        };
 
-                countries_tmp
-            }
-        }
-        None => {
-            match fetch_countries(&db).await {
-                Ok(val) => val,
-                Err(err) => return Err(err)
-            }
-        }
-    })
+        Ok(COUNTRIES_CACHE.clone())
+    }
 }
 
 //noinspection DuplicatedCode
@@ -192,41 +205,59 @@ pub async fn fetch_categories_for_countries(ctx: &RouteContext<()>, db: &KvStore
     Ok(result)
 }
 
-pub async fn get_categories_for_countries(ctx: &RouteContext<()>) -> Result<HashMap<String, HashMap<String, bool>>> {
-    let db = match db_get(&ctx) {
-        Ok(val) => val,
-        Err(err) => return Err(err)
-    };
 
-    Ok(match db_get_key(&db, "countries_have".into()).await {
-        Some(val) => {
-            let json: Value = serde_json::from_str(&*val).unwrap();
-            if should_update(json["updated_at"].as_u64().unwrap(), 86400000) {
-                match fetch_categories_for_countries(&ctx, &db).await {
+
+static mut CATEGORIES_FOR_COUNTRIES: Option<HashMap<String, HashMap<String, bool>>> = None;
+pub async fn get_categories_for_countries(ctx: &RouteContext<()>) -> Result<HashMap<String, HashMap<String, bool>>> {
+    unsafe {
+        match &CATEGORIES_FOR_COUNTRIES {
+            Some(val) => return Ok(val.clone()),
+            None => CATEGORIES_FOR_COUNTRIES = Some(Default::default())
+        }
+
+        console_log!("get_categories_for_countries cache empty");
+
+
+        let db = match db_get(&ctx) {
+            Ok(val) => val,
+            Err(err) => return Err(err)
+        };
+
+        CATEGORIES_FOR_COUNTRIES = Some(match db_get_key(&db, "countries_have".into()).await {
+            Some(val) => {
+                let json: Value = serde_json::from_str(&*val).unwrap();
+                if should_update(json["updated_at"].as_u64().unwrap(), 86400000) {
+                    match fetch_categories_for_countries(&ctx, &db).await {
+                        Ok(val) => val.into(),
+                        Err(err) => return Err(err)
+                    }
+                } else {
+                    let mut result: HashMap<String, HashMap<String, bool>> = Default::default();
+                    let countries = json["countries"].as_object().unwrap();
+                    for country in countries {
+                        let mut has_category: HashMap<String, bool> = Default::default();
+                        for has in country.1.as_object().unwrap() {
+                            has_category.insert(has.0.to_string(), has.1.as_bool().unwrap());
+                        }
+                        result.insert(country.0.to_string(), has_category);
+                    }
+
+                    result
+                }
+            }
+            None => {
+                match fetch_categories_for_countries(ctx, &db).await {
                     Ok(val) => val,
                     Err(err) => return Err(err)
-                }
-            } else {
-                let mut result: HashMap<String, HashMap<String, bool>> = Default::default();
-                let countries = json["countries"].as_object().unwrap();
-                for country in countries {
-                    let mut has_category: HashMap<String, bool> = Default::default();
-                    for has in country.1.as_object().unwrap() {
-                        has_category.insert(has.0.to_string(), has.1.as_bool().unwrap());
-                    }
-                    result.insert(country.0.to_string(), has_category);
-                }
+                }.into()
+            }
+        });
 
-                result
-            }
+        match &CATEGORIES_FOR_COUNTRIES {
+            Some(val) => Ok(val.clone()),
+            None => Err(Error::from("Failed to get_categories_for_countries"))
         }
-        None => {
-            match fetch_categories_for_countries(ctx, &db).await {
-                Ok(val) => val,
-                Err(err) => return Err(err)
-            }
-        }
-    })
+    }
 }
 
 pub async fn country_has_category(ctx: &RouteContext<()>, country: &str, category: &str) -> Result<bool> {
