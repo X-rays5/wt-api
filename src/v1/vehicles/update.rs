@@ -59,7 +59,7 @@ pub async fn update_vehicles(country: &str, category: &str) -> Value {
             })
             }
 
-            parse_tree(Fetch::Url(format!("{}{}{}", BASE_URL, country, category).parse().unwrap()).send().await).await
+            parse_tree(Fetch::Url(format!("{}{}{}", BASE_URL, country, category).parse().unwrap()).send().await, country).await
         }
     };
 
@@ -69,10 +69,10 @@ pub async fn update_vehicles(country: &str, category: &str) -> Value {
 async fn naval_vehicles(country: &str, naval_type: &str) -> Value {
     match naval_type {
         "coastal" => {
-            parse_tree(Fetch::Url(format!("{}{}{}", BASE_URL, COASTAL_FLEET_URL, country).parse().unwrap()).send().await).await
+            parse_tree(Fetch::Url(format!("{}{}{}", BASE_URL, COASTAL_FLEET_URL, country).parse().unwrap()).send().await, country).await
         },
         "bluewater" => {
-            parse_tree(Fetch::Url(format!("{}{}{}", BASE_URL, BLUEWATER_FLEET_URL, country).parse().unwrap()).send().await).await
+            parse_tree(Fetch::Url(format!("{}{}{}", BASE_URL, BLUEWATER_FLEET_URL, country).parse().unwrap()).send().await, country).await
         }
         _ => { json!({"error": "Invalid naval vehicle category"}) }
     }
@@ -81,10 +81,11 @@ async fn naval_vehicles(country: &str, naval_type: &str) -> Value {
 #[derive(Serialize, Deserialize)]
 struct STreeItem {
     name: String,
-    img_url: String
+    wiki_page: String,
+    thumbnail_img_url: String,
 }
 
-async fn parse_tree(html_req: Result<Response>) -> Value {
+async fn parse_tree(html_req: Result<Response>, country: &str) -> Value {
     let mut res: Response = match html_req {
         Ok(res) => {res}
         Err(err) => {return json!({"error": err.to_string()})}
@@ -106,10 +107,21 @@ async fn parse_tree(html_req: Result<Response>) -> Value {
     let tree_item_selector_image_inner = Selector::parse("img").unwrap();
     let mut vehicles: Vec<STreeItem> = Vec::new();
     for tree_item in html.select(&tree_item_selector) {
-        let mut vehicle: STreeItem = STreeItem { name: "".to_string(), img_url: "".to_string() };
+        let mut vehicle: STreeItem = STreeItem { name: "".to_string(), wiki_page: "".to_string(), thumbnail_img_url: "".to_string()};
         vehicle.name = tree_item.select(&tree_item_selector_name).next().unwrap().select(&tree_item_selector_name_inner).next().unwrap().inner_html();
         vehicle.name = vehicle.name.replace("&nbsp;", "");
-        vehicle.img_url = tree_item.select(&tree_item_selector_image).next().unwrap().select(&tree_item_selector_image_inner).next().unwrap().value().attr("src").unwrap().to_string();
+        vehicle.thumbnail_img_url = tree_item.select(&tree_item_selector_image).next().unwrap().select(&tree_item_selector_image_inner).next().unwrap().value().attr("src").unwrap().to_string();
+
+        match vehicle.name.chars().next().unwrap().is_alphanumeric() {
+            true => {}
+            false => {
+                vehicle.name.remove(0);
+                vehicle.name += format!(" ({})", country.to_string()).as_str();
+            }
+        }
+        let vehicle_name_url = vehicle.name.replace(" ", "_");
+        vehicle.wiki_page = format!("https://wiki.warthunder.com/{}", vehicle_name_url);
+
 
         vehicles.push(vehicle);
     }

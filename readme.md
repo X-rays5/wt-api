@@ -12,34 +12,37 @@ Response
 ```json
 {
   "helicopters": {
-    "updated_at": 1651875277005,
+    "updated_at": 1652028551087,
     "vehicles": [
       {
-        "img_url": "https://encyclopedia.warthunder.com/slots/sa_313b.png",
-        "name": "▀SA 313B Alouette II"
+        "name": "SA 313B Alouette II (Germany)",
+        "thumbnail_img_url": "https://encyclopedia.warthunder.com/slots/sa_313b.png",
+        "wiki_page": "https://wiki.warthunder.com/SA_313B_Alouette_II_(Germany)"
       }
     ]
   },
   "naval": {
     "bluewater": {
-      "updated_at": 1651875278388,
+      "updated_at": 1652028550699,
       "vehicles": [
         {
-          "img_url": "https://encyclopedia.warthunder.com/slots/germ_destroyer_class1924_leopard1932.png",
-          "name": "Leopard"
+          "name": "Leopard",
+          "thumbnail_img_url": "https://encyclopedia.warthunder.com/slots/germ_destroyer_class1924_leopard1932.png",
+          "wiki_page": "https://wiki.warthunder.com/Leopard"
         }
       ]
     },
     "coastal": {
-      "updated_at": 1651875278254,
+      "updated_at": 1652028550509,
       "vehicles": [
         {
-          "img_url": "https://encyclopedia.warthunder.com/slots/germ_ls_class.png",
-          "name": "LS 3"
+          "name": "LS 3",
+          "thumbnail_img_url": "https://encyclopedia.warthunder.com/slots/germ_ls_class.png",
+          "wiki_page": "https://wiki.warthunder.com/LS_3"
         }
       ]
     },
-    "updated_at": 1651875278388
+    "updated_at": 1652028550699
   }
 }
 ```
@@ -52,52 +55,47 @@ Response
 ```json
 {
   "aircraft": {
-    "updated_at": 1651953666736,
+    "updated_at": 1652028615147,
     "vehicles": [
       {
-        "img_url": "https://encyclopedia.warthunder.com/slots/bf-109b_2.png",
-        "name": "Bf 109 B-1"
+        "name": "Bf 109 B-1",
+        "thumbnail_img_url": "https://encyclopedia.warthunder.com/slots/bf-109b_2.png",
+        "wiki_page": "https://wiki.warthunder.com/Bf_109_B-1"
       }
     ]
   },
   "ground": {
-    "updated_at": 1651875276650,
+    "updated_at": 1652028480237,
     "vehicles": [
       {
-        "img_url": "https://encyclopedia.warthunder.com/slots/germ_sdkfz_221_s_pz_b_41.png",
-        "name": "Sd.Kfz.221 (s.Pz.B.41)"
-      }
-    ]
-  },
-  "helicopters": {
-    "updated_at": 1651875277005,
-    "vehicles": [
-      {
-        "img_url": "https://encyclopedia.warthunder.com/slots/sa_313b.png",
-        "name": "▀SA 313B Alouette II"
+        "name": "Sd.Kfz.221 (s.Pz.B.41)",
+        "thumbnail_img_url": "https://encyclopedia.warthunder.com/slots/germ_sdkfz_221_s_pz_b_41.png",
+        "wiki_page": "https://wiki.warthunder.com/Sd.Kfz.221_(s.Pz.B.41)"
       }
     ]
   },
   "naval": {
     "bluewater": {
-      "updated_at": 1651875278388,
+      "updated_at": 1652028550699,
       "vehicles": [
         {
-          "img_url": "https://encyclopedia.warthunder.com/slots/germ_destroyer_class1924_leopard1932.png",
-          "name": "Leopard"
+          "name": "Leopard",
+          "thumbnail_img_url": "https://encyclopedia.warthunder.com/slots/germ_destroyer_class1924_leopard1932.png",
+          "wiki_page": "https://wiki.warthunder.com/Leopard"
         }
       ]
     },
     "coastal": {
-      "updated_at": 1651875278254,
+      "updated_at": 1652028550509,
       "vehicles": [
         {
-          "img_url": "https://encyclopedia.warthunder.com/slots/germ_ls_class.png",
-          "name": "LS 3"
+          "name": "LS 3",
+          "thumbnail_img_url": "https://encyclopedia.warthunder.com/slots/germ_ls_class.png",
+          "wiki_page": "https://wiki.warthunder.com/LS_3"
         }
       ]
     },
-    "updated_at": 1651875278388
+    "updated_at": 1652028550699
   }
 }
 ```
@@ -111,36 +109,26 @@ Response
 {
   "ground": {
     "sweden": {
-      "updated_at": 1651950552409,
+      "updated_at": 1652028727834,
       "vehicles": [
         {
-          "img_url": "https://encyclopedia.warthunder.com/slots/sw_strv_m31.png",
-          "name": "Strv m/31"
+          "name": "Strv m/31",
+          "thumbnail_img_url": "https://encyclopedia.warthunder.com/slots/sw_strv_m31.png",
+          "wiki_page": "https://wiki.warthunder.com/Strv_m/31"
         }
       ]
     }
   },
-  "naval": {
-    "japan": {
-      "bluewater": {
-        "updated_at": 1651950728066,
-        "vehicles": [
-          {
-            "img_url": "https://encyclopedia.warthunder.com/slots/jp_destroyer_mutsuki.png",
-            "name": "IJN Mutsuki"
-          }
-        ]
-      },
-      "coastal": {
-        "updated_at": 1651950727920,
-        "vehicles": [
-          {
-            "img_url": "https://encyclopedia.warthunder.com/slots/jp_t14_class.png",
-            "name": "Type T-14"
-          }
-        ]
-      },
-      "updated_at": 1651950728066
+  "helicopters": {
+    "sweden": {
+      "updated_at": 1652028728267,
+      "vehicles": [
+        {
+          "name": "HKP3C",
+          "thumbnail_img_url": "https://encyclopedia.warthunder.com/slots/hkp3c.png",
+          "wiki_page": "https://wiki.warthunder.com/HKP3C"
+        }
+      ]
     }
   }
 }
@@ -155,36 +143,26 @@ Response
 {
   "ground": {
     "sweden": {
-      "updated_at": 1651950552409,
+      "updated_at": 1652028727834,
       "vehicles": [
         {
-          "img_url": "https://encyclopedia.warthunder.com/slots/sw_strv_m31.png",
-          "name": "Strv m/31"
+          "name": "Strv m/31",
+          "thumbnail_img_url": "https://encyclopedia.warthunder.com/slots/sw_strv_m31.png",
+          "wiki_page": "https://wiki.warthunder.com/Strv_m/31"
         }
       ]
     }
   },
-  "naval": {
-    "japan": {
-      "bluewater": {
-        "updated_at": 1651950728066,
-        "vehicles": [
-          {
-            "img_url": "https://encyclopedia.warthunder.com/slots/jp_destroyer_mutsuki.png",
-            "name": "IJN Mutsuki"
-          }
-        ]
-      },
-      "coastal": {
-        "updated_at": 1651950727920,
-        "vehicles": [
-          {
-            "img_url": "https://encyclopedia.warthunder.com/slots/jp_t14_class.png",
-            "name": "Type T-14"
-          }
-        ]
-      },
-      "updated_at": 1651950728066
+  "helicopters": {
+    "sweden": {
+      "updated_at": 1652028728267,
+      "vehicles": [
+        {
+          "name": "HKP3C",
+          "thumbnail_img_url": "https://encyclopedia.warthunder.com/slots/hkp3c.png",
+          "wiki_page": "https://wiki.warthunder.com/HKP3C"
+        }
+      ]
     }
   }
 }

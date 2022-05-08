@@ -5,7 +5,7 @@ compatibility_date = "2022-01-20"
 [[kv_namespaces]]
 binding = "db"
 id = "5beb4412bde0420ea0acc1beeae101d3"
-preview_id = "731bb9cd12e54a9d9ea41bc00ad598fb"
+preview_id = "b633db3e605443c0a01fcb27d04f533c"
 
 [vars]
 WORKERS_RS_VERSION = "0.0.9"
