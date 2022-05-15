@@ -10,7 +10,14 @@ pub async fn parse_categories(ctx: &RouteContext<()>, country: &str, category: &
     for category in category.split(",").into_iter() {
         if category == "all" {
             for vehicle_category in get_vehicle_categories() {
-                categories.push(vehicle_category.to_string());
+                match country_has_category(ctx, country, vehicle_category).await {
+                    Ok(val) => {
+                        if val {
+                            categories.push(vehicle_category.to_string());
+                        }
+                    },
+                    Err(err) => return Err(err)
+                }
             }
             return Ok(categories);
         }

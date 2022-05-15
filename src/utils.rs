@@ -233,7 +233,11 @@ pub async fn get_categories_for_countries(ctx: &RouteContext<()>) -> Result<Hash
                     }
                 } else {
                     let mut result: HashMap<String, HashMap<String, bool>> = Default::default();
-                    let countries = json["countries"].as_object().unwrap();
+                    let countries = match json["countries"].as_object() {
+                        Some(val) => val,
+                        None => return Err(Error::from("Failed to get countries as object get_categories_for_countries"))
+                    };
+
                     for country in countries {
                         let mut has_category: HashMap<String, bool> = Default::default();
                         for has in country.1.as_object().unwrap() {
@@ -265,9 +269,17 @@ pub async fn country_has_category(ctx: &RouteContext<()>, country: &str, categor
     let category = category.to_lowercase();
     match get_categories_for_countries(ctx).await {
         Ok(val) => {
-            Ok(val[&country][&category])
+            match val.get(&country) {
+                Some(val) => {
+                    match val.get(&category) {
+                        Some(val) => Ok(*val),
+                        None => Err(Error::from(format!("{} doesn't exist country_has_category", category)))
+                    }
+                },
+                None => Err(Error::from(format!("{} doesn't exist country_has_category", country)))
+            }
         }
-        Err(err) => return Err(err)
+        Err(err) => Err(err)
     }
 }
 
