@@ -78,7 +78,7 @@ pub async fn country_specific(req: Request, ctx: RouteContext<()>) -> Result<Res
         res.insert(category.to_lowercase(), vehicles);
     }
 
-    Response::ok(json!(res).to_string())
+    json_response(json!(res), 200)
 }
 
 pub async fn global_category(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
@@ -122,5 +122,5 @@ pub async fn global_category(_req: Request, ctx: RouteContext<()>) -> Result<Res
       }
     }
 
-    Response::ok(json!(res).to_string())
+    json_response(json!(res), 200)
 }

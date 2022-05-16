@@ -44,6 +44,12 @@ pub async fn parse_categories(ctx: &RouteContext<()>, country: &str, category: &
     Ok(categories)
 }
 
+pub fn json_response(body: Value, status_code: u16) -> Result<Response> {
+    let res = Response::from_json(&body).unwrap();
+
+    Ok(res.with_status(status_code))
+}
+
 pub fn error_response(code: u16, message: &str) -> Result<Response> {
     let res = json!({
         "error": {
@@ -52,5 +58,6 @@ pub fn error_response(code: u16, message: &str) -> Result<Response> {
         }
     });
     console_log!("Returning error code: {}\nWith message: {}", code, message);
-    Response::error(res.to_string(), code)
+
+    json_response(res, code)
 }

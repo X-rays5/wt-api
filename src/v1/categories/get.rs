@@ -7,7 +7,7 @@ use crate::utils::*;
 use crate::v1::utils::*;
 
 pub async fn get_categories(_req: Request, _ctx: RouteContext<()>) -> Result<Response> {
-    Response::ok(json!(get_vehicle_categories()).to_string())
+    json_response(json!(get_vehicle_categories()), 200)
 }
 
 pub async fn country_has_categories(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
@@ -39,7 +39,7 @@ pub async fn country_has_categories(_req: Request, ctx: RouteContext<()>) -> Res
         has_categories.insert(category, has);
     }
 
-    Response::ok(json!(has_categories).to_string())
+    json_response(json!(has_categories), 200)
 }
 
 pub async fn which_categories_per_country(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
@@ -48,5 +48,5 @@ pub async fn which_categories_per_country(_req: Request, ctx: RouteContext<()>) 
         Err(err) => return error_response(500, err.to_string().as_str())
     };
 
-    Response::ok(json!(res).to_string())
+    json_response(json!(res), 200)
 }

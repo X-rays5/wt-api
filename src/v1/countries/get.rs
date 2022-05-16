@@ -20,7 +20,7 @@ pub async fn countries(_req: Request, ctx: RouteContext<()>) -> Result<Response>
                 Err(err) => return error_response(500, err.to_string().as_str())
             };
 
-            return Response::ok(db_get_key(&db, "countries".into()).await.unwrap())
+            return json_response(serde_json::from_str(db_get_key(&db, "countries".into()).await.unwrap().as_str()).unwrap(), 200)
         }
     };
     if should_update(result["updated_at"].as_u64().unwrap(), 86400000) {
@@ -29,9 +29,9 @@ pub async fn countries(_req: Request, ctx: RouteContext<()>) -> Result<Response>
             Err(err) => return error_response(500, err.to_string().as_str())
         };
 
-        return Response::ok(db_get_key(&db, "countries".into()).await.unwrap())
+        return json_response(serde_json::from_str(db_get_key(&db, "countries".into()).await.unwrap().as_str()).unwrap(), 200)
     } else {
-        return Response::ok(result.to_string())
+        return json_response(result, 200)
     }
 }
 
@@ -57,5 +57,5 @@ pub async fn have_category(_req: Request, ctx: RouteContext<()>) -> Result<Respo
         }
     }
 
-    Response::ok(json!(have_category).to_string())
+    json_response(json!(have_category), 200)
 }
