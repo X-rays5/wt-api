@@ -86,7 +86,7 @@ pub async fn global_category(_req: Request, ctx: RouteContext<()>) -> Result<Res
         Some(val) => val,
         None => return error_response(400, "Missing category parameter")
     };
-    let categories = match parse_categories(&ctx, "", category, false).await {
+    let categories = match parse_categories(&ctx, "", category, true).await {
         Ok(val) => val,
         Err(err) => return error_response(400, err.to_string().as_str())
     };
@@ -96,6 +96,7 @@ pub async fn global_category(_req: Request, ctx: RouteContext<()>) -> Result<Res
         Ok(val) => val,
         Err(err) => return error_response(500, err.to_string().as_str())
     };
+
     for country in &countries {
       for category in &categories {
           if !res.contains_key(category) {

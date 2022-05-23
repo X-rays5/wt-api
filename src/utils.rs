@@ -273,10 +273,10 @@ pub async fn country_has_category(ctx: &RouteContext<()>, country: &str, categor
                 Some(val) => {
                     match val.get(&category) {
                         Some(val) => Ok(*val),
-                        None => Err(Error::from(format!("{} doesn't exist country_has_category", category)))
+                        None => Err(Error::from(format!("category {} doesn't exist country_has_category", category)))
                     }
                 },
-                None => Err(Error::from(format!("{} doesn't exist country_has_category", country)))
+                None => Err(Error::from(format!("country {} doesn't exist country_has_category", country)))
             }
         }
         Err(err) => Err(err)

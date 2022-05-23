@@ -110,7 +110,17 @@ async fn parse_tree(html_req: Result<Response>, country: &str) -> Value {
         let mut vehicle: STreeItem = STreeItem { name: "".to_string(), wiki_page: "".to_string(), thumbnail_img_url: "".to_string()};
         vehicle.name = tree_item.select(&tree_item_selector_name).next().unwrap().select(&tree_item_selector_name_inner).next().unwrap().inner_html();
         vehicle.name = vehicle.name.replace("&nbsp;", "");
-        vehicle.thumbnail_img_url = tree_item.select(&tree_item_selector_image).next().unwrap().select(&tree_item_selector_image_inner).next().unwrap().value().attr("src").unwrap().to_string();
+        vehicle.thumbnail_img_url = match tree_item.select(&tree_item_selector_image).next() {
+            Some(val) =>{
+                match val.select(&tree_item_selector_image_inner).next() {
+                    Some(val) => {
+                        val.value().attr("src").unwrap().to_string()
+                    },
+                    None => "NULL".to_string()
+                }
+            },
+            None => "NULL".to_string()
+        };
 
         match vehicle.name.chars().next().unwrap().is_alphanumeric() {
             true => {}

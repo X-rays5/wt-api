@@ -9,17 +9,12 @@ pub async fn parse_categories(ctx: &RouteContext<()>, country: &str, category: &
     let category = category.to_lowercase();
     for category in category.split(",").into_iter() {
         if category == "all" {
-            for vehicle_category in get_vehicle_categories() {
-                match country_has_category(ctx, country, vehicle_category).await {
-                    Ok(val) => {
-                        if val {
-                            categories.push(vehicle_category.to_string());
-                        }
-                    },
-                    Err(err) => return Err(err)
-                }
+            let mut res: Vec<String> = Default::default();
+            for string in get_vehicle_categories() {
+                res.push(string.to_string());
             }
-            return Ok(categories);
+
+            return Ok(res);
         }
 
         if !is_category(category) {
