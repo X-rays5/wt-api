@@ -64,13 +64,21 @@ pub async fn country_specific(req: Request, ctx: RouteContext<()>) -> Result<Res
         Err(err) => return error_response(404, err.to_string().as_str())
     };
 
+    // check which categories are available
+    let mut available_categories: Vec<String> = Vec::new();
+    for cat in categories {
+        if country_has_category(&ctx, country, cat.as_str()).await.unwrap() {
+            available_categories.push(cat);
+        }
+    }
+
     let db = match db_get(&ctx) {
         Ok(val) => val,
         Err(err) => return error_response(500, err.to_string().as_str())
     };
 
     let mut res: HashMap<String, Value> = Default::default();
-    for category in categories {
+    for category in available_categories {
         let vehicles = match get_category(&ctx, &db, country, category.as_str()).await {
             Ok(val) => val,
             Err(err) => return error_response(500, err.to_string().as_str())

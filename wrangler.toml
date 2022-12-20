@@ -1,7 +1,8 @@
 name = "wt-api"
-type = "javascript"
 workers_dev = true
 compatibility_date = "2022-01-20"
+main="build/worker/shim.mjs"
+
 [[kv_namespaces]]
 binding = "db"
 id = "5beb4412bde0420ea0acc1beeae101d3"
@@ -13,12 +14,7 @@ WORKERS_RS_VERSION = "0.0.9"
 [build]
 command = "cargo install -q worker-build && worker-build --release" # required
 
-[build.upload]
-dir = "build/worker"
-format = "modules"
-main = "./shim.mjs"
-
-[[build.upload.rules]]
+[[rules]]
 globs = ["**/*.wasm"]
 type = "CompiledWasm"
 
