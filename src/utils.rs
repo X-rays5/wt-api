@@ -234,19 +234,19 @@ pub async fn get_country_naval_subcategories(ctx: &RouteContext<()>, country: &s
         Err(err) => return Err(err)
     };
     let body = Html::parse_document(body.as_str());
-    let selector = Selector::parse(r#"li > a[href^="/Category:"]"#).unwrap();
+    let selector = Selector::parse(r#"div#mw-subcategories > div > ul > li > a"#).unwrap(); // cursed css selector but it works
     let links = body.select(&selector);
 
     let mut categories: Vec<serde_json::Value> = Default::default();
     for link in links {
+        console_log!("link: {:?}", link.value().attr("href").unwrap());
         let link = link.value().attr("href").unwrap();
-        let re = Regex::new(r#"Category:([a-zA-Z]*)_"#).unwrap();
+        let re = Regex::new(r#"category:([a-zA-Z]*)_"#).unwrap();
         let caps = re.captures(link).unwrap();
         let category = caps.get(1).unwrap().as_str();
 
         categories.push(json!({
             "name": category,
-            "link": link
         }));
     }
 
