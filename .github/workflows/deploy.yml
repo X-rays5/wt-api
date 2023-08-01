@@ -12,5 +12,5 @@ jobs:
       - uses: actions/checkout@master
       - name: Publish
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: npm i wrangler && npx wrangler deploy
