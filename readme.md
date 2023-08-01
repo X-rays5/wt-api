@@ -174,14 +174,12 @@ GET /v1/categories
 ```
 Response
 ```json
-{
-  "categories": [
-    "aircraft",
-    "ground",
-    "naval"
-  ],
-  "updated_at": 1651944857040
-}
+[
+  "aircraft",
+  "ground",
+  "helicopters",
+  "naval"
+]
 ```
 
 ### Check if country has categories
