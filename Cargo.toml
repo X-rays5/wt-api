@@ -19,6 +19,7 @@ worker = "0.0.12"
 serde = "1.0.136"
 serde_json = "1.0.79"
 scraper = "0.14.0"
+regex = "1.9.1"
 console_error_panic_hook = { version = "0.1.7", optional = true }
 
 [profile.release]

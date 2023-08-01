@@ -4,6 +4,7 @@ use worker::*;
 use worker::Result;
 use scraper::*;
 use serde_json::{json, Value};
+use regex::Regex;
 use crate::kv::{KvError, KvStore, ListResponse};
 
 cfg_if! {
@@ -205,7 +206,58 @@ pub async fn fetch_categories_for_countries(ctx: &RouteContext<()>, db: &KvStore
     Ok(result)
 }
 
+pub async fn get_country_naval_subcategories(ctx: &RouteContext<()>, country: &str) -> Result<serde_json::Value> {
+    let db_res = match db_get_key(&db_get(ctx).unwrap(), format!("{}_naval_subcategories", country).into()).await {
+        Some(val) => val,
+        None => "".parse().unwrap()
+    };
 
+    if !db_res.is_empty() {
+        let db_res: Value = serde_json::from_str(db_res.as_str()).unwrap();
+        let updated_at = db_res["updated_at"].as_u64().unwrap();
+        if !should_update(updated_at, 86400) {
+            return Ok(db_res);
+        }
+    }
+
+    let mut res = match Fetch::Url(format!("https://wiki.warthunder.com/Category:{}_ships", country).parse().unwrap()).send().await {
+        Ok(val) => val,
+        Err(err) => return Err(err)
+    };
+
+    if res.status_code() != 200 {
+            return Err(Error::from("Received non 200 status code when getting get_country_naval_subcategories"));
+    }
+
+    let body = match res.text().await {
+        Ok(val) => val.to_lowercase(),
+        Err(err) => return Err(err)
+    };
+    let body = Html::parse_document(body.as_str());
+    let selector = Selector::parse(r#"li > a[href^="/Category:"]"#).unwrap();
+    let links = body.select(&selector);
+
+    let mut categories: Vec<serde_json::Value> = Default::default();
+    for link in links {
+        let link = link.value().attr("href").unwrap();
+        let re = Regex::new(r#"Category:([a-zA-Z]*)_"#).unwrap();
+        let caps = re.captures(link).unwrap();
+        let category = caps.get(1).unwrap().as_str();
+
+        categories.push(json!({
+            "name": category,
+            "link": link
+        }));
+    }
+
+    let result = json!({
+        "categories": categories,
+        "updated_at": get_unix_ts()
+    });
+    db_write_key(&db_get(ctx).unwrap(), format!("{}_naval_subcategories", country).into(), result.to_string().as_str()).await;
+
+    Ok(result)
+}
 
 static mut CATEGORIES_FOR_COUNTRIES: Option<HashMap<String, HashMap<String, bool>>> = None;
 pub async fn get_categories_for_countries(ctx: &RouteContext<()>) -> Result<HashMap<String, HashMap<String, bool>>> {

@@ -11,10 +11,8 @@ const BASE_URL: &str = "https://wiki.warthunder.com/Category:";
 const PLANE_URL: &str = "_aircraft";
 const HELICOPTER_URL: &str = "_helicopters";
 const GROUND_URL: &str = "_ground_vehicles";
-const COASTAL_FLEET_URL: &str = "Coastal_Fleet_";
-const BLUEWATER_FLEET_URL: &str = "Bluewater_Fleet_";
 
-pub async fn update_vehicles(country: &str, category: &str) -> Value {
+pub async fn update_vehicles(ctx: &RouteContext<()>, country: &str, category: &str) -> Value {
     let category = category.to_lowercase();
     let category = category.as_str();
     if !is_category(category) {
@@ -29,12 +27,12 @@ pub async fn update_vehicles(country: &str, category: &str) -> Value {
 
     let res = match category {
         "naval" => {
-            let coastal = naval_vehicles(country, "coastal").await;
+            let coastal = naval_vehicles(ctx, country, "coastal").await;
             if coastal.as_object().unwrap().contains_key("error") {
                 return coastal;
             }
 
-            let bluewater = naval_vehicles(country, "bluewater").await;
+            let bluewater = naval_vehicles(ctx, country, "bluewater").await;
             if bluewater.as_object().unwrap().contains_key("error") {
                 return bluewater;
             }
@@ -66,16 +64,28 @@ pub async fn update_vehicles(country: &str, category: &str) -> Value {
     res
 }
 
-async fn naval_vehicles(country: &str, naval_type: &str) -> Value {
-    match naval_type {
-        "coastal" => {
-            parse_tree(Fetch::Url(format!("{}{}{}", BASE_URL, COASTAL_FLEET_URL, country).parse().unwrap()).send().await, country).await
-        },
-        "bluewater" => {
-            parse_tree(Fetch::Url(format!("{}{}{}", BASE_URL, BLUEWATER_FLEET_URL, country).parse().unwrap()).send().await, country).await
+async fn naval_vehicles(ctx: &RouteContext<()>, country: &str, naval_type: &str) -> Value {
+    let categories = match get_country_naval_subcategories(ctx, country).await {
+        Ok(val) => val,
+        Err(err) => return json!({"error": err.to_string()})
+    };
+
+    let mut valid = false;
+    let mut url = "";
+    for category in categories["categories"].as_array().unwrap() {
+        if category["name"].as_str().unwrap().to_lowercase() == naval_type {
+            valid = true;
+            url = category["url"].as_str().unwrap();
+            break;
         }
-        _ => { json!({"error": "Invalid naval vehicle category"}) }
     }
+
+    if !valid {
+        console_log!("invalid {} {}", country, naval_type);
+        return json!({})
+    }
+
+    parse_tree(Fetch::Url(format!("{}{}", BASE_URL, url).parse().unwrap()).send().await, country).await
 }
 
 #[derive(Serialize, Deserialize)]

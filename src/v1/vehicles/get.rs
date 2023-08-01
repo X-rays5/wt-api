@@ -17,7 +17,7 @@ async fn get_category(ctx: &RouteContext<()>, db: &KvStore, country: &str, categ
         Some(val) => from_str(&*val).unwrap(),
         None => {
             updated = true;
-            update_vehicles(country.to_lowercase().as_str(), category.to_lowercase().as_str()).await
+            update_vehicles(ctx, country.to_lowercase().as_str(), category.to_lowercase().as_str()).await
         }
     };
 
@@ -29,7 +29,7 @@ async fn get_category(ctx: &RouteContext<()>, db: &KvStore, country: &str, categ
     let current_ts = get_unix_ts();
     if updated || current_ts - updated_at >= 86400000 {
         if !updated {
-            category_json = update_vehicles(country, category).await;
+            category_json = update_vehicles(ctx, country, category).await;
         }
         match category_json.get("error") {
             None => {db_write_key(&db, format!("{}_{}", country.to_lowercase(), category), category_json.to_string().as_str()).await;}

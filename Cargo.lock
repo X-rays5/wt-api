@@ -1325,6 +1325,7 @@ version = "1.0.0"
 dependencies = [
  "cfg-if",
  "console_error_panic_hook",
+ "regex",
  "scraper",
  "serde",
  "serde_json",
