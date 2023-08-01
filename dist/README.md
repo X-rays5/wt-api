@@ -1,1 +1,0 @@
-This folder contains the built output assets for the worker "wt-api" generated at 2023-08-01T10:47:31.844Z.
