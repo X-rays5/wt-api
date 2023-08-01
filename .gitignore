@@ -3,3 +3,4 @@
 wasm-pack.log
 build/
 .wrangler
+node_modules
