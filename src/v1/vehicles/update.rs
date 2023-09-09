@@ -127,13 +127,27 @@ async fn parse_tree(html_req: Result<Response>, country: &str) -> Value {
     let tree_item_selector_name_inner = Selector::parse("span").unwrap();
     let tree_item_selector_image = Selector::parse("div.tree-item-img").unwrap();
     let tree_item_selector_image_inner = Selector::parse("img").unwrap();
+    let tree_item_selector_wiki_url = Selector::parse("div.tree-item-background").unwrap();
+    let tree_item_selector_wiki_url_inner = Selector::parse("a").unwrap();
+
     let mut vehicles: Vec<STreeItem> = Vec::new();
     for tree_item in html.select(&tree_item_selector) {
+        let vehicle_a_tag = tree_item.select(&tree_item_selector_wiki_url).next().unwrap().select(&tree_item_selector_wiki_url_inner).next().unwrap();
+
         let mut vehicle: STreeItem = STreeItem { name: "".to_string(), wiki_page: "".to_string(), thumbnail_img_url: "".to_string()};
-        vehicle.name = tree_item.select(&tree_item_selector_name).next().unwrap().select(&tree_item_selector_name_inner).next().unwrap().inner_html();
-        vehicle.name = vehicle.name.replace("&nbsp;", "");
+
+        vehicle.name = match vehicle_a_tag.value().attr("title") {
+            Some(name) => { name },
+            None => ""
+        }.parse().unwrap();
+
+        if vehicle.name.is_empty() {
+            vehicle.name = tree_item.select(&tree_item_selector_name).next().unwrap().select(&tree_item_selector_name_inner).next().unwrap().inner_html();
+            vehicle.name = vehicle.name.replace("&nbsp;", " ");
+        }
+
         vehicle.thumbnail_img_url = match tree_item.select(&tree_item_selector_image).next() {
-            Some(val) =>{
+            Some(val) => {
                 match val.select(&tree_item_selector_image_inner).next() {
                     Some(val) => {
                         val.value().attr("src").unwrap().to_string()
@@ -151,9 +165,9 @@ async fn parse_tree(html_req: Result<Response>, country: &str) -> Value {
                 vehicle.name += format!(" ({})", country.to_string()).as_str();
             }
         }
-        let vehicle_name_url = vehicle.name.replace(" ", "_");
-        vehicle.wiki_page = format!("https://wiki.warthunder.com/{}", vehicle_name_url);
 
+        let wiki_url = vehicle_a_tag.value().attr("href").unwrap();
+        vehicle.wiki_page = format!("https://wiki.warthunder.com{}", wiki_url);
 
         vehicles.push(vehicle);
     }
