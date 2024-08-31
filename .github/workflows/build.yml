@@ -1,6 +1,10 @@
 name: Build
 
-on: [pull_request]
+on:
+  push:
+    branches-ignore:
+      - master
+  pull_request: null
 
 jobs:
   deploy:
@@ -9,4 +13,4 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Build
-        run: npm i wrangler && npx wrangler build
+        run: npm i wrangler && npx wrangler deploy --dry-run --outdir=dist

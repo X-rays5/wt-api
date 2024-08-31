@@ -3,24 +3,33 @@ name = "wt-api"
 description = "Basic api for war thunder. Supporting vehicle related stuff."
 repository = "https://github.com/X-rays5/wt-api"
 license-file = "LICENSE"
-version = "1.0.0"
-authors = ["X-rays5 <thomas@scheenen.dev>"]
-edition = "2018"
+version = "1.1.0"
+authors = [ "X-rays5 <61073708+X-rays5@users.noreply.github.com>" ]
+edition = "2021"
+
+[package.metadata.release]
+release = false
+
+# https://github.com/rustwasm/wasm-pack/issues/1247
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [features]
 default = ["console_error_panic_hook"]
 
 [dependencies]
 cfg-if = "1.0.0"
-worker = "0.0.12"
-serde = "1.0.136"
-serde_json = "1.0.79"
-scraper = "0.14.0"
-regex = "1.9.1"
+worker = { version="0.3.4", features=['http'] }
+worker-macros = { version="0.3.4", features=['http'] }
+serde = "1.0.209"
+serde_json = "1.0.127"
+scraper = "0.20.0"
+regex = "1.10.6"
 console_error_panic_hook = { version = "0.1.7", optional = true }
+getrandom = { version = "0.2", features = ["js"] }
 
 [profile.release]
 opt-level = "s"

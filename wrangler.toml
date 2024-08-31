@@ -1,18 +1,15 @@
 name = "wt-api"
-workers_dev = true
-compatibility_date = "2022-01-20"
 main = "build/worker/shim.mjs"
+compatibility_date = "2024-08-31"
+minify = true
 
 [[kv_namespaces]]
 binding = "db"
 id = "5beb4412bde0420ea0acc1beeae101d3"
 preview_id = "b633db3e605443c0a01fcb27d04f533c"
 
-[vars]
-WORKERS_RS_VERSION = "0.0.9"
-
 [build]
-command = "cargo install -q worker-build && worker-build --release" # required
+command = "cargo install -q worker-build && worker-build --release"
 
 # read more about configuring your Worker via wrangler.toml at:
 # https://developers.cloudflare.com/workers/cli-wrangler/configuration
