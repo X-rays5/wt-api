@@ -43,7 +43,7 @@ pub async fn country_has_categories(_req: Request, ctx: RouteContext<()>) -> Res
 }
 
 pub async fn which_categories_per_country(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
-    let res =match get_categories_for_countries(&ctx).await {
+    let res = match get_categories_for_countries(&ctx).await {
         Ok(val) => val,
         Err(err) => return error_response(500, err.to_string().as_str())
     };
