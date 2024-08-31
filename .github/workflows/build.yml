@@ -9,4 +9,4 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Build
-        run: npm i wrangler && npx wrangler build
+        run: npm i wrangler && npx wrangler deploy --dry-run --outdir=dist
