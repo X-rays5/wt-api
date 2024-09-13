@@ -12,7 +12,7 @@ struct CachedFeedResult {
     feed: FeedResult
 }
 
-async fn retrieve_from_cache(ctx: &RouteContext<()>, feed_options: &FeedOptions) -> Option<FeedResult> {
+async fn retrieve_from_cache(ctx: &RouteContext<()>, feed_options: &FeedOptions) -> Option<CachedFeedResult> {
     let db = db_get(&ctx).unwrap();
     match db_get_key(&db, serde_json::to_string(feed_options).unwrap()).await {
         Some(value) => {
@@ -21,7 +21,7 @@ async fn retrieve_from_cache(ctx: &RouteContext<()>, feed_options: &FeedOptions)
             if should_update(feed_result.updated_at, 3600000) {
                 return None;
             }
-            Some(feed_result.feed)
+            Some(feed_result)
         }
         None => {
             None
