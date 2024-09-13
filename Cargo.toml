@@ -32,6 +32,7 @@ regex = "1.10.6"
 console_error_panic_hook = { version = "0.1.7", optional = true }
 getrandom = { version = "0.2", features = ["js"] }
 reqwest = "0.12.7"
+base64 = "0.22.1"
 
 [profile.release]
 opt-level = "s"

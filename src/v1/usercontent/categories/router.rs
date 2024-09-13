@@ -1,3 +1,5 @@
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use serde::{Deserialize, Serialize};
 use crate::v1::usercontent::api::api::get_feed;
 use crate::v1::usercontent::api::types::{FeedOptions, FeedResult};
@@ -12,9 +14,13 @@ struct CachedFeedResult {
     feed: FeedResult
 }
 
+fn get_db_key_from_feed_options(feed_options: &FeedOptions) -> String {
+    BASE64_STANDARD.encode(serde_json::to_string(feed_options).unwrap().as_bytes())
+}
+
 async fn retrieve_from_cache(ctx: &RouteContext<()>, feed_options: &FeedOptions) -> Option<CachedFeedResult> {
     let db = db_get(&ctx).unwrap();
-    match db_get_key(&db, serde_json::to_string(feed_options).unwrap()).await {
+    match db_get_key(&db, get_db_key_from_feed_options(feed_options)).await {
         Some(value) => {
             let feed_result: CachedFeedResult = serde_json::from_str(&value).unwrap();
             // Check if not older than 1 hour
@@ -31,14 +37,13 @@ async fn retrieve_from_cache(ctx: &RouteContext<()>, feed_options: &FeedOptions)
 
 async fn save_to_cache(ctx: &RouteContext<()>, feed_options: &FeedOptions, feed: &FeedResult) -> Option<CachedFeedResult> {
     let db = db_get(&ctx).unwrap();
-    let key = serde_json::to_string(feed_options).unwrap();
     let value = CachedFeedResult {
         feed: feed.clone(),
         updated_at: get_unix_ts()
     };
 
     let val_tmp = value.clone();
-    match db_write_key(&db, key, json!(val_tmp).to_string().as_str()).await {
+    match db_write_key(&db, get_db_key_from_feed_options(feed_options), json!(val_tmp).to_string().as_str()).await {
         true => {
             Some(value)
         }
