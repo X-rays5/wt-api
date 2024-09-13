@@ -42,13 +42,13 @@ pub async fn parse_categories(ctx: &RouteContext<()>, country: &str, category: &
 
 pub fn json_response(body: Value, status_code: u16) -> Result<Response> {
     let mut headers = HeaderMap::new();
-    headers.insert("Content-Type", "application/json".parse().unwrap());
-    headers.insert("Access-Control-Allow-Origin", "*".parse().unwrap());
-    headers.insert("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS".parse().unwrap());
-    headers.insert("Access-Control-Allow-Headers", "Content-Type".parse().unwrap());
-    headers.insert("Access-Control-Max-Age", "86400".parse().unwrap());
+    headers.insert("Content-Type", "application/json".parse()?);
+    headers.insert("Access-Control-Allow-Origin", "*".parse()?);
+    headers.insert("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS".parse()?);
+    headers.insert("Access-Control-Allow-Headers", "Content-Type".parse()?);
+    headers.insert("Access-Control-Max-Age", "86400".parse()?);
 
-    let res = Response::from_json(&body).unwrap().with_headers(Headers::from(headers));
+    let res = Response::from_json(&body)?.with_headers(Headers::from(headers));
     Ok(res.with_status(status_code))
 }
 
