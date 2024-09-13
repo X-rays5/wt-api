@@ -3,7 +3,7 @@ use strum_macros::IntoStaticStr;
 
 // Feed request
 #[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, IntoStaticStr)]
+#[derive(Serialize, Deserialize, IntoStaticStr, Clone)]
 pub enum ContentType {
     all,
     image,
@@ -41,14 +41,14 @@ pub struct FeedOptions {
 
 
 // Feed request response
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct FeedResult {
     pub status: String,
     pub data: FeedData
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct FeedData {
     pub list: Vec<FeedItem>,
     pub pageTitle: String, // HTML page title
@@ -56,7 +56,7 @@ pub struct FeedData {
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct FeedItem {
     pub lang_group: i32,
     pub id: i32,
@@ -83,14 +83,14 @@ pub struct FeedItem {
     pub inverted_roughness: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct FeedItemAuthor {
     pub id: i32,
     pub nickname: String,
     pub avatar: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct FeedItemImage {
     pub id: i32,
     #[serde(rename = "type")]
@@ -101,14 +101,14 @@ pub struct FeedItemImage {
     pub ratio: f32,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct FeedItemVideo {
     #[serde(rename = "type")]
     pub src: String,
     pub image: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct FeedItemFile {
     pub id: i32,
     pub name: String,

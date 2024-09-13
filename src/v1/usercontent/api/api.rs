@@ -1,9 +1,8 @@
-use std::str::FromStr;
 use crate::v1::usercontent::api::types::{FeedOptions, FeedResult};
 
 const BASE_URL: &str = "https://live.warthunder.com";
 
-pub async fn get_feed(options: FeedOptions) -> Result<FeedResult, String> {
+pub async fn get_feed(options: &FeedOptions) -> Result<FeedResult, String> {
     let client = reqwest::Client::new();
     let res = client.post(format!("{}/api/feed/get_unlogged/", BASE_URL))
         .form(&options)
