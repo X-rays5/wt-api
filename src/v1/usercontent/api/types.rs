@@ -1,8 +1,9 @@
 use serde::{Serialize, Deserialize};
+use strum_macros::IntoStaticStr;
 
 // Feed request
 #[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, IntoStaticStr)]
 pub enum ContentType {
     all,
     image,
@@ -17,7 +18,7 @@ pub enum ContentType {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, IntoStaticStr)]
 pub enum ContentSorting {
     created, // Recent
     rating, // Popular
@@ -25,13 +26,13 @@ pub enum ContentSorting {
     downloads, // Most downloaded
 }
 
+#[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 pub struct FeedOptions {
     pub content: ContentType,
     pub sort: ContentSorting,
     pub user: Option<String>, // Author
     pub period: Option<i32>, // Days before now
-    #[allow(non_snake_case)]
     pub searchString: Option<String>, // Array of # searches separated by spaces
     pub page: i32, // Page id
     pub featured: Option<i32>, // No clue what this does
@@ -46,10 +47,10 @@ pub struct FeedResult {
     pub data: FeedData
 }
 
+#[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 pub struct FeedData {
     pub list: Vec<FeedItem>,
-    #[allow(non_snake_case)]
     pub pageTitle: String, // HTML page title
     pub link: String, // Relative URL browser
 }
