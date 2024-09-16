@@ -3,6 +3,9 @@ main = "build/worker/shim.mjs"
 compatibility_date = "2024-08-31"
 minify = true
 
+[placement]
+mode = "smart"
+
 [[kv_namespaces]]
 binding = "db"
 id = "5beb4412bde0420ea0acc1beeae101d3"
