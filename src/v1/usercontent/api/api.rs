@@ -23,7 +23,7 @@ pub async fn get_feed(options: &FeedOptions) -> Result<FeedResult, String> {
                 match parsed_response.status == "OK" {
                     true => Ok(parsed_response),
                     false => {
-                        console_log!("Failed to get feed: {:?}", parsed_response);
+                        console_log!("Failed to get feed: {:?}", &body);
                         Err(body)
                     }
                 }
