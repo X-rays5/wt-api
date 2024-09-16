@@ -53,6 +53,17 @@ pub fn json_response(body: Value, status_code: u16) -> Result<Response> {
 }
 
 pub fn error_response(code: u16, message: &str) -> Result<Response> {
+    let maybe_json = match serde_json::from_str(message) {
+        Ok(json) => json,
+        Err(_) => {
+            json!(message)
+        }
+    };
+
+    error_response_json(code, &maybe_json)
+}
+
+pub fn error_response_json(code: u16, message: &serde_json::Value) -> Result<Response> {
     let res = json!({
         "error": {
             "code": code,
