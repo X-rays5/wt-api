@@ -88,7 +88,7 @@ pub async fn route_category(req: Request, ctx: RouteContext<()>) -> Result<Respo
                     json_response(json!(res), 200)
                 }
                 Err(e) => {
-                    error_response(500, &e.to_string())
+                    error_response(500, &e)
                 }
             }
         }

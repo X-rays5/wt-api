@@ -1,3 +1,4 @@
+use worker::console_log;
 use crate::v1::usercontent::api::types::{FeedOptions, FeedResult};
 
 const BASE_URL: &str = "https://live.warthunder.com";
@@ -18,7 +19,14 @@ pub async fn get_feed(options: &FeedOptions) -> Result<FeedResult, String> {
                     Ok(data) => data,
                     Err(e) => return Err(e.to_string())
                 };
-                Ok(parsed_response)
+
+                match parsed_response.status == "OK" {
+                    true => Ok(parsed_response),
+                    false => {
+                        console_log!("Failed to get feed: {:?}", parsed_response);
+                        Err(body)
+                    }
+                }
             } else {
                 Err(format!("Request failed with status code: {}", status))
             }
