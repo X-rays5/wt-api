@@ -24,6 +24,10 @@ pub async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
 
     router
         .get("/", index::get_index)
+        .on_async("/health", |_, _| async {
+            let response = Response::ok("Health check OK");
+            response
+        })
         .get_async("/v1/vehicles/:country/:category", v1::vehicles::get::country_specific)
         .get_async("/v1/countries", v1::countries::get::countries)
         .get_async("/v1/countries/have/:category", v1::countries::get::have_category)
